@@ -697,6 +697,8 @@ MachineTypes BitcodeFile::getMachineType() {
     return ARMNT;
   case Triple::aarch64:
     return ARM64;
+  case Triple::ebc:
+    return EBC;
   default:
     return IMAGE_FILE_MACHINE_UNKNOWN;
   }

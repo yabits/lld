@@ -317,6 +317,23 @@ void SectionChunk::applyRelARM64(uint8_t *Off, uint16_t Type, OutputSection *OS,
   }
 }
 
+void SectionChunk::applyRelEBC(uint8_t *Off, uint16_t Type, OutputSection *OS,
+                               uint64_t S, uint64_t P) const {
+  switch (Type) {
+  case IMAGE_REL_EBC_ADDR64:    add64(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_EBC_ADDR32:    add32(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_EBC_ADDR32NB:  add32(Off, S); break;
+  case IMAGE_REL_EBC_REL64:     add64(Off, S - P - 8); break;
+  case IMAGE_REL_EBC_REL32:     add32(Off, S - P - 4); break;
+  case IMAGE_REL_EBC_REL16:     add16(Off, S - P - 2); break;
+  case IMAGE_REL_EBC_SECTION:   applySecIdx(Off, OS); break;
+  case IMAGE_REL_EBC_SECREL:    applySecRel(this, Off, OS, S); break;
+  default:
+    error("unsupported relocation type 0x" + Twine::utohexstr(Type) + " in " +
+          toString(File));
+  }
+}
+
 static void maybeReportRelocationToDiscarded(const SectionChunk *FromChunk,
                                              Defined *Sym,
                                              const coff_relocation &Rel) {
@@ -404,6 +421,9 @@ void SectionChunk::writeTo(uint8_t *Buf) const {
     case ARM64:
       applyRelARM64(Off, Rel.Type, OS, S, P);
       break;
+    case EBC:
+      applyRelEBC(Off, Rel.Type, OS, S, P);
+      break;
     default:
       llvm_unreachable("unknown machine type");
     }
@@ -433,6 +453,10 @@ static uint8_t getBaserelType(const coff_relocation &Rel) {
   case ARM64:
     if (Rel.Type == IMAGE_REL_ARM64_ADDR64)
       return IMAGE_REL_BASED_DIR64;
+    return IMAGE_REL_BASED_ABSOLUTE;
+  case EBC:
+    if (Rel.Type == IMAGE_REL_EBC_ADDR64)
+      return IMAGE_REL_BASED_DIR64;;
     return IMAGE_REL_BASED_ABSOLUTE;
   default:
     llvm_unreachable("unknown machine type");
@@ -531,6 +555,8 @@ static int getRuntimePseudoRelocSize(uint16_t Type) {
     default:
       return 0;
     }
+  case EBC:
+    return 0;
   default:
     llvm_unreachable("unknown machine type");
   }
@@ -661,6 +687,13 @@ void ImportThunkChunkARM64::writeTo(uint8_t *Buf) const {
   memcpy(Buf + OutputSectionOff, ImportThunkARM64, sizeof(ImportThunkARM64));
   applyArm64Addr(Buf + OutputSectionOff, ImpSymbol->getRVA(), RVA, 12);
   applyArm64Ldr(Buf + OutputSectionOff + 4, Off);
+}
+
+void ImportThunkChunkEBC::writeTo(uint8_t *Buf) const {
+  memcpy(Buf + OutputSectionOff, ImportThunkEBC, sizeof(ImportThunkEBC));
+  // The first two bytes is a MOVI instruction. Fill its operand.
+  write32le(Buf + OutputSectionOff + 2,
+            ImpSymbol->getRVA() + Config->ImageBase);
 }
 
 // A Thumb2, PIC, non-interworking range extension thunk.
@@ -815,6 +848,7 @@ uint8_t Baserel::getDefaultType() {
   switch (Config->Machine) {
   case AMD64:
   case ARM64:
+  case EBC:
     return IMAGE_REL_BASED_DIR64;
   case I386:
   case ARMNT:

@@ -33,6 +33,7 @@ class Symbol;
 static const auto AMD64 = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
 static const auto ARM64 = llvm::COFF::IMAGE_FILE_MACHINE_ARM64;
 static const auto ARMNT = llvm::COFF::IMAGE_FILE_MACHINE_ARMNT;
+static const auto EBC = llvm::COFF::IMAGE_FILE_MACHINE_EBC;
 static const auto I386 = llvm::COFF::IMAGE_FILE_MACHINE_I386;
 
 // Represents an /export option.
@@ -80,7 +81,9 @@ enum class GuardCFLevel {
 // Global configuration.
 struct Configuration {
   enum ManifestKind { SideBySide, Embed, No };
-  bool is64() { return Machine == AMD64 || Machine == ARM64; }
+  bool is64() {
+    return Machine == AMD64 || Machine == ARM64 || Machine == EBC ;
+  }
 
   llvm::COFF::MachineTypes Machine = IMAGE_FILE_MACHINE_UNKNOWN;
   size_t Wordsize;

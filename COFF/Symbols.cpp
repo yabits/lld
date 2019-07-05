@@ -80,6 +80,8 @@ COFFSymbolRef DefinedCOFF::getCOFFSymbol() {
 uint16_t DefinedAbsolute::NumOutputSections;
 
 static Chunk *makeImportThunk(DefinedImportData *S, uint16_t Machine) {
+  if (Machine == EBC)
+    return make<ImportThunkChunkEBC>(S);
   if (Machine == AMD64)
     return make<ImportThunkChunkX64>(S);
   if (Machine == I386)

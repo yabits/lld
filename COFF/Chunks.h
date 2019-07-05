@@ -169,6 +169,8 @@ public:
                    uint64_t P) const;
   void applyRelARM64(uint8_t *Off, uint16_t Type, OutputSection *OS, uint64_t S,
                      uint64_t P) const;
+  void applyRelEBC(uint8_t *Off, uint16_t Type, OutputSection *OS, uint64_t S,
+                   uint64_t P) const;
 
   void getRuntimePseudoRelocs(std::vector<RuntimePseudoReloc> &Res);
 
@@ -312,6 +314,11 @@ static const uint8_t ImportThunkARM64[] = {
     0x00, 0x02, 0x1f, 0xd6, // br   x16
 };
 
+static const uint8_t ImportThunkEBC[] = {
+    0xb7, 0x27, 0x00, 0x00, 0x00, 0x00,// MOVIdd r7, 0x0
+    0x01, 0x1f, // JMP32 @r7
+};
+
 // Windows-specific.
 // A chunk for DLL import jump table entry. In a final output, its
 // contents will be a JMP instruction to some __imp_ symbol.
@@ -351,6 +358,16 @@ class ImportThunkChunkARM64 : public Chunk {
 public:
   explicit ImportThunkChunkARM64(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkARM64); }
+  void writeTo(uint8_t *Buf) const override;
+
+private:
+  Defined *ImpSymbol;
+};
+
+class ImportThunkChunkEBC : public Chunk {
+public:
+  explicit ImportThunkChunkEBC(Defined *S) : ImpSymbol(S) {}
+  size_t getSize() const override { return sizeof(ImportThunkEBC); }
   void writeTo(uint8_t *Buf) const override;
 
 private:
