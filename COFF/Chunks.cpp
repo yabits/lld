@@ -323,9 +323,9 @@ void SectionChunk::applyRelEBC(uint8_t *Off, uint16_t Type, OutputSection *OS,
   case IMAGE_REL_EBC_ADDR64:    add64(Off, S + Config->ImageBase); break;
   case IMAGE_REL_EBC_ADDR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_EBC_ADDR32NB:  add32(Off, S); break;
-  case IMAGE_REL_EBC_REL64:     add64(Off, S - P - 8); break;
-  case IMAGE_REL_EBC_REL32:     add32(Off, S - P - 4); break;
-  case IMAGE_REL_EBC_REL16:     add16(Off, S - P - 2); break;
+  case IMAGE_REL_EBC_REL64:     add64(Off, S - P + 2); break;
+  case IMAGE_REL_EBC_REL32:     add32(Off, S - P + 2); break;
+  case IMAGE_REL_EBC_REL16:     add16(Off, S - P + 2); break;
   case IMAGE_REL_EBC_SECTION:   applySecIdx(Off, OS); break;
   case IMAGE_REL_EBC_SECREL:    applySecRel(this, Off, OS, S); break;
   case IMAGE_REL_EBC_IMM64:     add64(Off, S + Config->ImageBase); break;
