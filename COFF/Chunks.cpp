@@ -331,6 +331,7 @@ void SectionChunk::applyRelEBC(uint8_t *Off, uint16_t Type, OutputSection *OS,
   case IMAGE_REL_EBC_IMM64:     add64(Off, S + Config->ImageBase); break;
   case IMAGE_REL_EBC_IMM32:     add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_EBC_IMM16:     add16(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_EBC_CALL32:    add32(Off, S - P - 4); break;
   default:
     error("unsupported relocation type 0x" + Twine::utohexstr(Type) + " in " +
           toString(File));
